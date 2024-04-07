@@ -21,9 +21,7 @@ const register = async (req, res) => {
     res.status(400).send(loginValidation.error.details[0].message);
     return;
   }
-  console.log("here1");
   try {
-    console.log(username, password)
     const user = await User.create({
       username,
       password,
@@ -31,7 +29,6 @@ const register = async (req, res) => {
     
     res.status(200).json({ success_msg: "successfully registered." });
   } catch (error) {
-    console.log("here3");
 
     console.error("Error registering user:", error); // Log the error for debugging
 
@@ -41,7 +38,6 @@ const register = async (req, res) => {
 
 
 const login = async (req, res) => {
-  console.log("here");
   const { username, password } = req.body;
   // In real-world scenario, you would verify user credentials
   const loginValidation = loginScheme.validate({
@@ -69,7 +65,6 @@ const login = async (req, res) => {
       res.status(400).json({ err_msg: "Invalid email or password" });
       return;
     }
-    console.log(process.env.AUTH_TOKEN_SECRET);
     const jwtExpirySeconds = 18000;
     const token = jwt.sign({ id: user.id }, process.env.AUTH_TOKEN_SECRET, {
       expiresIn: jwtExpirySeconds,
@@ -109,4 +104,44 @@ const getJobDetails = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getAllJobs, getJobDetails };
+const searchJobs = async (req, res) => {
+  try {
+    const response = await axios.get(
+      "https://dev6.dansmultipro.com/api/recruitment/positions.json"
+    );
+    const positions = response.data;
+
+    // Extract query parameters from the request
+    console.log(req.query)
+    const { desc, location, fullTime } = req.query;
+
+    // Filter positions based on query parameters
+    let filteredPositions = positions;
+
+    if (location) {
+      filteredPositions = filteredPositions.filter(
+        (position) => position.location.toLowerCase().includes(location.toLowerCase())
+      );
+    }
+
+    if (desc) {
+      filteredPositions = filteredPositions.filter(
+        (position) => position.title.toLowerCase().includes(desc.toLowerCase())
+      );
+    }
+
+    if (fullTime) {
+      filteredPositions = filteredPositions.filter(
+        (position) => position.type.toLowerCase().includes(fullTime.toLowerCase())
+      );
+    }
+
+    // Send filtered positions as response
+    res.status(200).json(filteredPositions);
+  } catch (error) {
+    console.error("Error fetching positions:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+module.exports = { register, login, getAllJobs, getJobDetails, searchJobs };
