@@ -2,7 +2,7 @@ const Sequelize = require("sequelize");
 const bcrypt = require("bcrypt")
 
 
-const sequelize = new Sequelize("dansjobs", "harith", "testest123", {
+const sequelize = new Sequelize(process.env.DB_NAME, process.env.USER_DB, process.env.PASS_DB, {
   dialect: "mysql",
 });
 
